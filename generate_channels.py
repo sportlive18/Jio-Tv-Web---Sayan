@@ -72,8 +72,8 @@ video{width:100%;height:100%;object-fit:contain;background:#000;}
   if(isSandboxedEnv()){ triggerBlockScreen('Disable Sandbox', 'Opening Chrome Browser Only & Disable Ad blocker'); return; }
   const CONFIG={
     streamUrl:"{STREAM_URL}",
-    keyId:"400131994b445d8c8817202248760fda",
-    key:"2d56cb6f07a75b9aff165d534ae2bfc4",
+    keyId:"{KEY_ID}",
+    key:"{KEY}",
     cookieUrl:"https://allrounder-live2.pages.dev/api/cookie.json"
   };
   document.addEventListener("DOMContentLoaded",async()=>{
@@ -111,18 +111,33 @@ video{width:100%;height:100%;object-fit:contain;background:#000;}
 </html>"""
 
 def generate():
-    print(f"Fetching M3U from {M3U_URL}...")
-    response = requests.get(M3U_URL)
-    if response.status_code != 200:
-        print("Failed to fetch M3U")
-        return
-
-    lines = response.text.splitlines()
+    url = "https://cdn.jsdelivr.net/gh/alex4528x/m3u@main/jtv.m3u"
+    print(f"Fetching M3U from {url}...")
+    try:
+        response = requests.get(url, timeout=15)
+        response.raise_for_status()
+        lines = response.text.splitlines()
+    except Exception as e:
+        print(f"Failed to fetch M3U: {e}")
+        print("Reading from local jtv.m3u instead...")
+        with open("jtv.m3u", "r", encoding="utf-8") as f:
+            lines = f.read().splitlines()
     channels = []
     
-    # Simple extraction logic: find all https:// URLs that point to .mpd
+    current_key_id = "400131994b445d8c8817202248760fda" # default
+    current_key = "2d56cb6f07a75b9aff165d534ae2bfc4" # default
+    
     for line in lines:
-        if line.startswith("https://") and ".mpd" in line:
+        line = line.strip()
+        if 'adaptive.license_key=' in line:
+            parts = line.split('adaptive.license_key=')
+            if len(parts) > 1:
+                keys = parts[1].strip()
+                if ':' in keys and not keys.startswith('{'):
+                    kparts = keys.split(':')
+                    current_key_id = kparts[0]
+                    current_key = kparts[1]
+        elif line.startswith("https://") and ".mpd" in line:
             # Extract name from URL
             # Example: https://jiotvpllive.cdn.jio.com/bpk-tv/Star_Sports_HD1_Hindi_BTS/output/index.mpd
             match = re.search(r'/bpk-tv/([^/]+)/', line)
@@ -130,12 +145,16 @@ def generate():
                 ch_name = match.group(1)
                 # Strip query params/hashes from URL to keep base MPD path
                 clean_url = line.split('?')[0].split('#')[0]
-                channels.append({"name": ch_name, "url": clean_url})
+                channels.append({"name": ch_name, "url": clean_url, "keyId": current_key_id, "key": current_key})
             else:
                 # Fallback to last segment if structure is different
                 ch_name = line.split('/')[-2] if '/' in line else "Channel"
                 clean_url = line.split('?')[0].split('#')[0]
-                channels.append({"name": ch_name, "url": clean_url})
+                channels.append({"name": ch_name, "url": clean_url, "keyId": current_key_id, "key": current_key})
+                
+            # Keep the key for the next channel? Usually keys follow immediately before the stream in m3u. 
+            # In case some channels don't have a key, we might want to reset to default or keep the last one.
+            # We'll keep the last one as per Kodi m3u standard or reset to default to be safe. We'll leave it as is.
 
     print(f"Found {len(channels)} channels. Starting generation...")
 
@@ -146,7 +165,7 @@ def generate():
         # Format title (replace underscores with spaces)
         title = ch['name'].replace('_', ' ')
         
-        content = HTML_TEMPLATE.replace("{CHANNEL_TITLE}", title).replace("{STREAM_URL}", ch['url'])
+        content = HTML_TEMPLATE.replace("{CHANNEL_TITLE}", title).replace("{STREAM_URL}", ch['url']).replace("{KEY_ID}", ch['keyId']).replace("{KEY}", ch['key'])
         
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
