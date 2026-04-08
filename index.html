@@ -248,11 +248,16 @@
                 const fileName = ch.name.replace(/ /g, '_') + '.html';
                 card.href = 'Channel/' + fileName;
                 
-                // Extract first letter or acronym for icon
+                // Extract first letter or acronym for icon fallback
                 const acronym = ch.name.split('_').map(w => w[0]).join('').substring(0, 3).toUpperCase();
                 
+                let iconHtml = `<div class="icon-box">${acronym}</div>`;
+                if (ch.logo) {
+                    iconHtml = `<img src="${ch.logo}" alt="${ch.name}" style="width: 100%; height: 60px; object-fit: contain; margin-bottom: 1rem; border-radius: 10px;">`;
+                }
+
                 card.innerHTML = `
-                    <div class="icon-box">${acronym}</div>
+                    ${iconHtml}
                     <div class="channel-name">${ch.name.replace(/_/g, ' ')}</div>
                 `;
                 grid.appendChild(card);

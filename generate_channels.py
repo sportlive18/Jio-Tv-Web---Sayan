@@ -111,25 +111,27 @@ video{width:100%;height:100%;object-fit:contain;background:#000;}
 </html>"""
 
 def generate():
-    url = "https://cdn.jsdelivr.net/gh/alex4528x/m3u@main/jtv.m3u"
-    print(f"Fetching M3U from {url}...")
+    print("Reading from local jtv.m3u...")
     try:
-        response = requests.get(url, timeout=15)
-        response.raise_for_status()
-        lines = response.text.splitlines()
-    except Exception as e:
-        print(f"Failed to fetch M3U: {e}")
-        print("Reading from local jtv.m3u instead...")
         with open("jtv.m3u", "r", encoding="utf-8") as f:
             lines = f.read().splitlines()
+    except Exception as e:
+        print(f"Failed to read local jtv.m3u: {e}")
+        return
     channels = []
     
     current_key_id = "400131994b445d8c8817202248760fda" # default
     current_key = "2d56cb6f07a75b9aff165d534ae2bfc4" # default
+    current_logo = ""
     
     for line in lines:
         line = line.strip()
-        if 'adaptive.license_key=' in line:
+        if line.startswith("#EXTINF"):
+            m = re.search(r'tvg-logo="([^"]+)"', line)
+            if m:
+                clean_url = m.group(1).split("?")[0].split("#")[0]
+                current_logo = "logos/" + clean_url.split('/')[-1]
+        elif 'adaptive.license_key=' in line:
             parts = line.split('adaptive.license_key=')
             if len(parts) > 1:
                 keys = parts[1].strip()
@@ -145,12 +147,12 @@ def generate():
                 ch_name = match.group(1)
                 # Strip query params/hashes from URL to keep base MPD path
                 clean_url = line.split('?')[0].split('#')[0]
-                channels.append({"name": ch_name, "url": clean_url, "keyId": current_key_id, "key": current_key})
+                channels.append({"name": ch_name, "url": clean_url, "keyId": current_key_id, "key": current_key, "logo": current_logo})
             else:
                 # Fallback to last segment if structure is different
                 ch_name = line.split('/')[-2] if '/' in line else "Channel"
                 clean_url = line.split('?')[0].split('#')[0]
-                channels.append({"name": ch_name, "url": clean_url, "keyId": current_key_id, "key": current_key})
+                channels.append({"name": ch_name, "url": clean_url, "keyId": current_key_id, "key": current_key, "logo": current_logo})
                 
             # Keep the key for the next channel? Usually keys follow immediately before the stream in m3u. 
             # In case some channels don't have a key, we might want to reset to default or keep the last one.
