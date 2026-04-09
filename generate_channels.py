@@ -86,7 +86,8 @@ video{width:100%;height:100%;object-fit:contain;background:#000;}
     await player.attach(video);
     const ui=new shaka.ui.Overlay(player,container,video);
     ui.configure({ addBigPlayButton: true, controlPanelElements: [ "mute", "play_pause", "time_and_duration", "spacer", "quality", "picture_in_picture", "fullscreen" ], seekBarColors: { base: "white", buffered: "red", played: "green" } });
-    player.configure({ drm:{clearKeys:{[CONFIG.keyId]:CONFIG.key}}, manifest:{defaultPresentationDelay:5}, streaming:{ lowLatencyMode:true, bufferingGoal:10, rebufferingGoal:2, safeSeekOffset:5 } });
+    const drmConfig = (CONFIG.keyId && CONFIG.key) ? {clearKeys:{[CONFIG.keyId]:CONFIG.key}} : {};
+    player.configure({ drm: drmConfig, manifest: {defaultPresentationDelay:5}, streaming: { lowLatencyMode:true, bufferingGoal:10, rebufferingGoal:2, safeSeekOffset:5 } });
     let cookieValue="";
     try{ const response=await fetch(CONFIG.cookieUrl,{cache:"no-store"}); const data=await response.json(); cookieValue=data.cookie||""; }catch(e){}
     if(cookieValue){
@@ -120,13 +121,17 @@ def generate():
         return
     channels = []
     
-    current_key_id = "400131994b445d8c8817202248760fda" # default
-    current_key = "2d56cb6f07a75b9aff165d534ae2bfc4" # default
+    current_key_id = ""
+    current_key = ""
     current_logo = ""
     
     for line in lines:
         line = line.strip()
         if line.startswith("#EXTINF"):
+            # Reset values for every NEW channel entry in M3U
+            current_key_id = ""
+            current_key = ""
+            current_logo = ""
             m = re.search(r'tvg-logo="([^"]+)"', line)
             if m:
                 clean_url = m.group(1).split("?")[0].split("#")[0]
