@@ -60,9 +60,24 @@ video{width:100%;height:100%;object-fit:contain;background:#000;}
     streamUrl:"https://jiotvpllive.cdn.jio.com/bpk-tv/Vijay_Takkar_BTS/output/index.mpd",
     keyId:"ecdf4d18807e55bf814c3f40656a33c3",
     key:"0031af1bf42234195cda0eb88fd6003b",
-    cookieUrl:"https://allrounder-live2.pages.dev/api/cookie.json",
-    backupCookieUrl:"https://sayan10-sportlink-cookies.pages.dev/api/cookie.json"
+    cookieUrls:[
+      "https://allrounder-live2.pages.dev/api/cookie.json",
+      "https://sayan10-sportlink-cookies.pages.dev/api/cookie.json"
+    ]
   };
+
+  async function fetchCookieWithFallback(urls){
+    for(const url of urls){
+      try{
+        const response = await fetch(url, {cache:"no-store"});
+        if(!response.ok) continue;
+        const data = await response.json();
+        if(data.cookie) return data.cookie;
+      }catch(e){}
+    }
+    return "";
+  }
+
   document.addEventListener("DOMContentLoaded",async()=>{
     shaka.polyfill.installAll();
     if(!shaka.Player.isBrowserSupported()) return;
@@ -75,8 +90,9 @@ video{width:100%;height:100%;object-fit:contain;background:#000;}
     ui.configure({ addBigPlayButton: true, controlPanelElements: [ "mute", "play_pause", "time_and_duration", "spacer", "quality", "picture_in_picture", "fullscreen" ], seekBarColors: { base: "white", buffered: "red", played: "green" } });
     const drmConfig = (CONFIG.keyId && CONFIG.key) ? {clearKeys:{[CONFIG.keyId]:CONFIG.key}} : {};
     player.configure({ drm: drmConfig, manifest: {defaultPresentationDelay:5}, streaming: { lowLatencyMode:true, bufferingGoal:10, rebufferingGoal:2, safeSeekOffset:5 } });
-    let cookieValue="";
-    try{ const response=await fetch(CONFIG.cookieUrl,{cache:"no-store"}); if(!response.ok) throw new Error(); const data=await response.json(); cookieValue=data.cookie||""; }catch(e){ try{ const response2=await fetch(CONFIG.backupCookieUrl,{cache:"no-store"}); const data2=await response2.json(); cookieValue=data2.cookie||""; }catch(e2){} }
+    
+    const cookieValue = await fetchCookieWithFallback(CONFIG.cookieUrls);
+    
     if(cookieValue){
       player.getNetworkingEngine().registerRequestFilter((type,request)=>{
         request.headers["Referer"]="https://www.jiotv.com/";
