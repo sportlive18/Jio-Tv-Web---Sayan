@@ -27,7 +27,7 @@ jobs:
       - name: Download external M3U
         run: |
           echo "Downloading latest jtv.m3u..."
-          curl -fSL "https://raw.githubusercontent.com/alex4528x/m3u/refs/heads/main/jtv.m3u" -o jtv.m3u
+          curl -fSL "https://raw.githubusercontent.com/alex4528x/m3u_1/refs/heads/main/jtv.m3u" -o jtv.m3u
           echo "Download complete. File size: $(wc -c < jtv.m3u) bytes"
 
       - name: Generate channel HTML files
