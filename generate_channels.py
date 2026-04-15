@@ -3,7 +3,7 @@ import re
 import requests
 
 # Configuration
-M3U_URL = "https://raw.githubusercontent.com/alex4528x/m3u/refs/heads/main/jtv.m3u"
+M3U_URL = "https://raw.githubusercontent.com/alex4528x/m3u_1/refs/heads/main/jtv.m3u"
 OUTPUT_DIR = "Channel"
 TEMPLATE_FILE = "template_demo.html" # We'll create this first
 
