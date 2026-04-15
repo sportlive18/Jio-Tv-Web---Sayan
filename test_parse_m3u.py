@@ -2,7 +2,7 @@ import requests
 import re
 import json
 
-url = "https://raw.githubusercontent.com/alex4528x/m3u/refs/heads/main/jtv.m3u"
+url = "https://raw.githubusercontent.com/alex4528x/m3u_1/refs/heads/main/jtv.m3u"
 try:
     response = requests.get(url, timeout=10)
     lines = response.text.splitlines()
