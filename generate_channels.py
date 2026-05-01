@@ -1,14 +1,28 @@
 import os
 import re
 import requests
+import json
+import shutil
+import base64
+import time
+from concurrent.futures import ThreadPoolExecutor
 
 # Configuration
-M3U_URL = "https://raw.githubusercontent.com/alex4528x/m3u_1/refs/heads/main/jtv.m3u"
+M3U_URL = "https://raw.githubusercontent.com/sportlive18/Jio-Auto-Update-m3u-playlist/refs/heads/main/jiotv.m3u"
 OUTPUT_DIR = "Channel"
-TEMPLATE_FILE = "template_demo.html" # We'll create this first
 
-# Ensure output directory exists
-if not os.path.exists(OUTPUT_DIR):
+# Ensure output directory exists and is clean
+if os.path.exists(OUTPUT_DIR):
+    for filename in os.listdir(OUTPUT_DIR):
+        file_path = os.path.join(OUTPUT_DIR, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print(f'Failed to delete {file_path}. Reason: {e}', flush=True)
+else:
     os.makedirs(OUTPUT_DIR)
 
 HTML_TEMPLATE = """<!DOCTYPE html>
@@ -20,331 +34,208 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <meta name="referrer" content="no-referrer">
 <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/controls.css"/>
-
-    <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-FMP9REY96D"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-FMP9REY96D');
-</script>
-  <style>
+<style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
-
-.shaka-video-container{
-position:fixed;
-inset:0;
-background:#000;
-display:flex;
-align-items:center;
-justify-content:center;
-}
-
-video{
-width:100%;
-height:100%;
-object-fit:contain;
-background:#000;
-}
-
-.custom-watermark{
-position:absolute;
-z-index:40;
-pointer-events:none;
-top:65%;
-left:6%;
-transform:translateY(-50%);
-font-size:11px;
-font-weight:600;
-color:rgba(255,255,255,0.12);
-}
-
-/* --- Updated Modern Blocker Styles --- */
-.block-overlay{
-position:fixed;
-inset:0;
-z-index:99999;
-display:flex;
-align-items:center;
-justify-content:center;
-background:radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
-text-align:center;
-}
-
-.block-box{
-padding:40px;
-max-width:500px;
-width:90%;
-background:rgba(20, 20, 20, 0.95);
-border-radius:16px;
-border:1px solid rgba(255, 255, 255, 0.1);
-box-shadow:0 20px 50px rgba(0,0,0,0.5);
-animation: fadeInUp 0.6s ease-out;
-}
-
-@keyframes fadeInUp {
-from { opacity: 0; transform: translateY(30px); }
-to { opacity: 1; transform: translateY(0); }
-}
-
-.block-title{
-font-size:42px;
-font-weight:800;
-color:#ffffff;
-text-transform:uppercase;
-letter-spacing:2px;
-margin-bottom:20px;
-text-shadow:0 0 10px rgba(255, 0, 0, 0.3);
-}
-
-.block-sub{
-font-size:14px;
-font-weight:500;
-color:rgba(255, 255, 255, 0.6);
-line-height:1.6;
-}
-
-/* Icon hidden as requested, but keeping structure if needed later */
-.block-icon{ display: none; }
-.block-note{ display: none; }
-
-@media(max-width:700px){
-.custom-watermark{font-size:9px;top:60%;left:16%}
-.block-title{font-size:28px}
-.block-box{padding:25px}
-.block-sub{font-size:12px}
-}
+.shaka-video-container{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;}
+video{width:100%;height:100%;object-fit:contain;background:#000;}
 </style>
-    
 </head>
-    
 <body>
-
 <div class="shaka-video-container" id="player-container">
 <video id="video" autoplay muted playsinline preload="metadata"></video>
-<div class="custom-watermark"> </div>
 </div>
-
 <script>
-(function(){
-  
-  function isSandboxedEnv(){
-    try {
-      if (window.self === window.top) return false;
-      if (window.frameElement && window.frameElement.hasAttribute("sandbox")) {
-        return true;
-      }
-      try {
-        document.domain = document.domain;
-        if (window.frameElement && !window.frameElement.getAttribute("sandbox")) {
-             return false;
-        }
-      } catch (e) {
-         return true;
-      }
-      return false;
-    } catch(e) {
-      return true;
-    }
-  }
-  function triggerBlockScreen(title, message){
-    const container = document.getElementById("player-container");
-    const video = document.getElementById("video");
-    
-    try {
-      video.pause();
-      video.removeAttribute('src');
-      video.load();
-    } catch(e){}
+(async function(){
+  shaka.polyfill.installAll();
+  if(!shaka.Player.isBrowserSupported()) return;
 
-    const overlay = document.createElement("div");
-    overlay.className = "block-overlay";
-    overlay.id = "sandbox-block-display";
-    overlay.innerHTML = `
-      <div class="block-box">
-        <div class="block-title">${title}</div>
-        <div class="block-sub">${message}</div>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-    container.style.display = 'none';
-  }
-  if(isSandboxedEnv()){
-
-    triggerBlockScreen('Disable Sandbox', 'Opening Chrome Browser Only & Disable Ad blocker');
-    return;
-  }
   const CONFIG={
     streamUrl:"{STREAM_URL}",
     keyId:"{KEY_ID}",
     key:"{KEY}",
+    licenseUrl:"{LICENSE_URL}",
+    cookie:"{COOKIE}",
     cookieUrl:"https://sayan10-sportlink-cookies.pages.dev/api/cookie.json"
   };
 
-  document.addEventListener("DOMContentLoaded",async()=>{
+  const video=document.getElementById("video");
+  const container=document.getElementById("player-container");
+  const player=new shaka.Player();
+  await player.attach(video);
+  const ui=new shaka.ui.Overlay(player,container,video);
 
-    shaka.polyfill.installAll();
-    if(!shaka.Player.isBrowserSupported()) return;
+  ui.configure({
+    addBigPlayButton: true,
+    controlPanelElements: [
+      "mute", "play_pause", "time_and_duration", "spacer", "quality", "picture_in_picture", "fullscreen"
+    ],
+    seekBarColors: {
+      base: "rgba(255, 255, 255, 0.3)",
+      buffered: "rgba(255, 255, 255, 0.5)",
+      played: "rgb(0, 150, 255)"
+    }
+  });
 
-    const video=document.getElementById("video");
-    const container=document.getElementById("player-container");
-
-    video.muted=true;
-
-    const player=new shaka.Player();
-    await player.attach(video);
-
-    const ui=new shaka.ui.Overlay(player,container,video);
-
-    ui.configure({
-  addBigPlayButton: true,
-  controlPanelElements: [
-    "mute",           // First - volume/mute button
-    "play_pause",     // Second - play/pause button  
-    "time_and_duration", // Third - timeline timings (00:00 / 00:00)
-    "spacer",
-    "quality",
-    "picture_in_picture",
-    "fullscreen"
-  ],
-  seekBarColors: {
-    base: "white",
-    buffered: "red", 
-    played: "green"
+  const drmConfig = {};
+  if (CONFIG.keyId && CONFIG.key) {
+    // Shaka expects hex for clearKeys
+    drmConfig.clearKeys = {[CONFIG.keyId]: CONFIG.key};
+  } else if (CONFIG.licenseUrl) {
+    drmConfig.servers = {'com.widevine.alpha': CONFIG.licenseUrl};
   }
-});
 
-    const drmConfig = (CONFIG.keyId && CONFIG.key) ? {clearKeys:{[CONFIG.keyId]:CONFIG.key}} : {};
-    player.configure({
-      drm: drmConfig,
-      manifest:{defaultPresentationDelay:5},
-      streaming:{
-        lowLatencyMode:true,
-        bufferingGoal:10,
-        rebufferingGoal:2,
-        safeSeekOffset:5
+  player.configure({
+    drm: drmConfig,
+    manifest:{defaultPresentationDelay:5},
+    streaming:{lowLatencyMode:true,bufferingGoal:10,rebufferingGoal:2,safeSeekOffset:5}
+  });
+
+  let cookieValue=CONFIG.cookie || "";
+  if(!cookieValue){
+      try{
+        const response=await fetch(CONFIG.cookieUrl,{cache:"no-store"});
+        const data=await response.json();
+        cookieValue=data.cookie||"";
+      }catch(e){}
+  }
+
+  if(cookieValue){
+    player.getNetworkingEngine().registerRequestFilter((type,request)=>{
+      request.headers["Referer"]="https://www.jiotv.com/";
+      request.headers["User-Agent"]="plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6";
+      request.headers["Cookie"]=cookieValue;
+      let urlCookie=cookieValue.startsWith("__hdnea__=")?cookieValue.substring(10):cookieValue;
+      if((type===shaka.net.NetworkingEngine.RequestType.MANIFEST||type===shaka.net.NetworkingEngine.RequestType.SEGMENT)&&!request.uris[0].includes("__hdnea__")){
+        const sep=request.uris[0].includes("?")?"&":"?";
+        request.uris[0]+=sep+"__hdnea__="+urlCookie;
       }
     });
+  }
 
-    let cookieValue="";
-
-    try{
-      const response=await fetch(CONFIG.cookieUrl,{cache:"no-store"});
-      const data=await response.json();
-      cookieValue=data.cookie||"";
-    }catch(e){}
-
-    if(cookieValue){
-      player.getNetworkingEngine().registerRequestFilter((type,request)=>{
-        request.headers["Referer"]="https://www.jiotv.com/";
-        request.headers["User-Agent"]="plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6";
-        request.headers["Cookie"]=cookieValue;
-
-        let urlCookie=cookieValue.startsWith("__hdnea__=")?cookieValue.substring(10):cookieValue;
-
-        if((type===shaka.net.NetworkingEngine.RequestType.MANIFEST||
-        type===shaka.net.NetworkingEngine.RequestType.SEGMENT)&&
-        !request.uris[0].includes("__hdnea__")){
-          const sep=request.uris[0].includes("?")?"&":"?";
-          request.uris[0]+=sep+"__hdnea__="+urlCookie;
-        }
-      });
-    }
-
-    try{
-      await player.load(CONFIG.streamUrl);
-      video.play().catch(()=>{});
-    }catch(e){}
-
-    video.addEventListener("play",()=>{
-      video.muted=false;
-    });
-
-  });
+  try{
+    await player.load(CONFIG.streamUrl);
+    video.play().catch(()=>{});
+  }catch(e){}
+  video.addEventListener("play",()=>{video.muted=false;});
 })();
 </script>
-  <script>(function(s){s.dataset.zone='10603308',s.src='https://bvtpk.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
-  
 </body>
 </html>"""
 
+def b64url_to_hex(b64):
+    padding = '=' * (4 - len(b64) % 4)
+    b64 = b64.replace('-', '+').replace('_', '/') + padding
+    return base64.b64decode(b64).hex()
+
+def fetch_key(url, session, retries=3):
+    if not url or not url.startswith("http"):
+        return None, None, url
+    for i in range(retries):
+        try:
+            headers = {
+                'User-Agent': 'plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6',
+                'Referer': 'https://www.jiotv.com/'
+            }
+            resp = session.get(url, headers=headers, timeout=10)
+            if resp.status_code == 200:
+                try:
+                    data = resp.json()
+                    if "keys" in data and len(data["keys"]) > 0:
+                        kid_b64 = data["keys"][0]["kid"]
+                        k_b64 = data["keys"][0]["k"]
+                        return b64url_to_hex(kid_b64), b64url_to_hex(k_b64), ""
+                except: pass
+            elif resp.status_code == 429: time.sleep(1)
+        except Exception:
+            if i == retries - 1: pass
+    return "", "", url
+
 def generate():
-    print("Reading from local jtv.m3u...")
+    print(f"Fetching M3U from {M3U_URL}...", flush=True)
     try:
-        with open("jtv.m3u", "r", encoding="utf-8") as f:
-            lines = f.read().splitlines()
+        response = requests.get(M3U_URL, timeout=30)
+        response.raise_for_status()
+        lines = response.text.splitlines()
     except Exception as e:
-        print(f"Failed to read local jtv.m3u: {e}")
+        print(f"Error: {e}", flush=True)
         return
-    channels = []
-    
-    current_key_id = ""
-    current_key = ""
-    current_logo = ""
-    
+
+    raw_channels = []
+    current_key_url = ""
     for line in lines:
         line = line.strip()
-        if line.startswith("#EXTINF"):
-            # Reset values for every NEW channel entry in M3U
-            current_key_id = ""
-            current_key = ""
-            current_logo = ""
-            m = re.search(r'tvg-logo="([^"]+)"', line)
-            if m:
-                clean_url = m.group(1).split("?")[0].split("#")[0]
-                current_logo = "logos/" + clean_url.split('/')[-1]
-        elif 'adaptive.license_key=' in line:
-            parts = line.split('adaptive.license_key=')
-            if len(parts) > 1:
-                keys = parts[1].strip()
-                if ':' in keys and not keys.startswith('{'):
-                    kparts = keys.split(':')
-                    current_key_id = kparts[0]
-                    current_key = kparts[1]
-        elif line.startswith("https://") and ".mpd" in line:
-            # Extract name from URL
-            # Example: https://jiotvpllive.cdn.jio.com/bpk-tv/Star_Sports_HD1_Hindi_BTS/output/index.mpd
-            match = re.search(r'/bpk-tv/([^/]+)/', line)
-            if match:
-                ch_name = match.group(1)
-                # Strip query params/hashes from URL to keep base MPD path
-                clean_url = line.split('?')[0].split('#')[0]
-                channels.append({"name": ch_name, "url": clean_url, "keyId": current_key_id, "key": current_key, "logo": current_logo})
-            else:
-                # Fallback to last segment if structure is different
-                ch_name = line.split('/')[-2] if '/' in line else "Channel"
-                clean_url = line.split('?')[0].split('#')[0]
-                channels.append({"name": ch_name, "url": clean_url, "keyId": current_key_id, "key": current_key, "logo": current_logo})
+        if not line: continue
+        if "inputstream.adaptive.license_key=" in line:
+            current_key_url = line.split("=", 1)[-1]
+        elif line.startswith("https://"):
+            parts = line.split("|")
+            stream_url = parts[0]
+            cookie = parts[1].replace("cookie=", "").strip() if len(parts) > 1 and "cookie=" in parts[1] else ""
+            match = re.search(r'/bpk-tv/([^/]+)/', stream_url)
+            ch_name = match.group(1) if match else stream_url.split('/')[-2]
+            raw_channels.append({"name": ch_name, "url": stream_url, "key_url": current_key_url, "cookie": cookie})
+            current_key_url = ""
+
+    print(f"Found {len(raw_channels)} channels. Fetching keys...", flush=True)
+    
+    # Pre-list logos for matching
+    existing_logos = []
+    if os.path.exists("logos"):
+        existing_logos = {f.lower(): f for f in os.listdir("logos") if f.lower().endswith(".png")}
+    
+    session = requests.Session()
+    def process_channel(ch):
+        kid, k, l_url = fetch_key(ch['key_url'], session)
+        if not ch['key_url'].startswith("http") and ":" in ch['key_url']:
+            parts = ch['key_url'].split(":")
+            kid, k, l_url = parts[0], parts[1], ""
+            
+        # Logo matching
+        logo_path = ""
+        base_name = ch['name'].lower()
+        # Try multiple candidates: full name, name without _MOB, name without _BTS, etc.
+        candidates = [
+            base_name + ".png",
+            base_name.replace("_mob", "") + ".png",
+            base_name.replace("_bts", "") + ".png",
+            base_name.split("_")[0] + ".png"
+        ]
+        for cand in candidates:
+            if cand in existing_logos:
+                logo_path = "logos/" + existing_logos[cand]
+                break
                 
-            # Keep the key for the next channel? Usually keys follow immediately before the stream in m3u. 
-            # In case some channels don't have a key, we might want to reset to default or keep the last one.
-            # We'll keep the last one as per Kodi m3u standard or reset to default to be safe. We'll leave it as is.
+        return {
+            "name": ch['name'],
+            "url": ch['url'],
+            "keyId": kid,
+            "key": k,
+            "licenseUrl": l_url,
+            "cookie": ch['cookie'],
+            "logo": logo_path
+        }
 
-    print(f"Found {len(channels)} channels. Starting generation...")
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        channels = list(executor.map(process_channel, raw_channels))
 
+    print(f"Generating files...", flush=True)
     for ch in channels:
         safe_name = ch['name'].replace(' ', '_')
         file_path = os.path.join(OUTPUT_DIR, f"{safe_name}.html")
-        
-        # Format title (replace underscores with spaces)
-        title = ch['name'].replace('_', ' ')
-        
-        content = HTML_TEMPLATE.replace("{CHANNEL_TITLE}", title).replace("{STREAM_URL}", ch['url']).replace("{KEY_ID}", ch['keyId']).replace("{KEY}", ch['key'])
-        
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(content)
+        content = HTML_TEMPLATE.replace("{CHANNEL_TITLE}", ch['name'].replace('_', ' '))\
+                               .replace("{STREAM_URL}", ch['url'])\
+                               .replace("{KEY_ID}", ch['keyId'] or "")\
+                               .replace("{KEY}", ch['key'] or "")\
+                               .replace("{LICENSE_URL}", ch['licenseUrl'] or "")\
+                               .replace("{COOKIE}", ch['cookie'] or "")
+        with open(file_path, "w", encoding="utf-8") as f: f.write(content)
             
-    print(f"Successfully generated {len(channels)} files in {OUTPUT_DIR}/")
-
-    # Generate channels.json for the dashboard
-    import json
-    json_path = os.path.join(OUTPUT_DIR, "channels.json")
-    with open(json_path, "w", encoding="utf-8") as f:
+    with open(os.path.join(OUTPUT_DIR, "channels.json"), "w", encoding="utf-8") as f:
         json.dump(channels, f, indent=2)
-    print(f"Generated {json_path}")
+    print(f"Done! Generated {len(channels)} files.", flush=True)
 
 if __name__ == "__main__":
     generate()
+
+
