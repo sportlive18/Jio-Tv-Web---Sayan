@@ -3341,9 +3341,9 @@
   {
     "name": "Only_Music_MOB",
     "url": "https://jiotvmblive.cdn.jio.com/bpk-tv/Only_Music_MOB/WDVLive/index.mpd",
-    "keyId": "",
-    "key": "",
-    "licenseUrl": "https://temp.webplay.fun/jtv/key.php?id=903",
+    "keyId": "87106f553fd655cca72e1d653c447447",
+    "key": "87238fbcc30dbcb0d75891bdc4a14eba",
+    "licenseUrl": "",
     "cookie": "__hdnea__=st=1777696212~exp=1777717812~acl=/*~hmac=e4f85fa24427410c046b685c92538d0378bac3bb265c47ab5d91f20535df71cb",
     "logo": ""
   },
@@ -3370,16 +3370,16 @@
     "url": "https://jiotvmblive.cdn.jio.com/bpk-tv/GoodNews_Channel_MOB/WDVLive/index.mpd",
     "keyId": "",
     "key": "",
-    "licenseUrl": "https://temp.webplay.fun/jtv/key.php?id=907",
+    "licenseUrl": "",
     "cookie": "__hdnea__=st=1777696212~exp=1777717812~acl=/*~hmac=e4f85fa24427410c046b685c92538d0378bac3bb265c47ab5d91f20535df71cb",
     "logo": "logos/GoodNews_Channel.png"
   },
   {
     "name": "Indradhanu_MOB",
     "url": "https://jiotvmblive.cdn.jio.com/bpk-tv/Indradhanu_MOB/WDVLive/index.mpd",
-    "keyId": "",
-    "key": "",
-    "licenseUrl": "https://temp.webplay.fun/jtv/key.php?id=908",
+    "keyId": "ebeb102beed553408bd70b6666ea6ca4",
+    "key": "c753b7fdf5a8dad1e67f97cdfeb143fb",
+    "licenseUrl": "",
     "cookie": "__hdnea__=st=1777696212~exp=1777717812~acl=/*~hmac=e4f85fa24427410c046b685c92538d0378bac3bb265c47ab5d91f20535df71cb",
     "logo": "logos/Indradhanu.png"
   },
@@ -3388,25 +3388,25 @@
     "url": "https://jiotvmblive.cdn.jio.com/bpk-tv/Media_One_TV_MOB/WDVLive/index.mpd",
     "keyId": "",
     "key": "",
-    "licenseUrl": "https://temp.webplay.fun/jtv/key.php?id=910",
+    "licenseUrl": "",
     "cookie": "__hdnea__=st=1777696212~exp=1777717812~acl=/*~hmac=e4f85fa24427410c046b685c92538d0378bac3bb265c47ab5d91f20535df71cb",
     "logo": "logos/Media_One_TV.png"
   },
   {
     "name": "Khabar_Fast_MOB",
     "url": "https://jiotvmblive.cdn.jio.com/bpk-tv/Khabar_Fast_MOB/WDVLive/index.mpd",
-    "keyId": "",
-    "key": "",
-    "licenseUrl": "https://temp.webplay.fun/jtv/key.php?id=915",
+    "keyId": "9f7e0150b8f65c97bac2a458fa31e693",
+    "key": "6108b006fae0d05d7cc8ea5bbe9f44a5",
+    "licenseUrl": "",
     "cookie": "__hdnea__=st=1777696212~exp=1777717812~acl=/*~hmac=e4f85fa24427410c046b685c92538d0378bac3bb265c47ab5d91f20535df71cb",
     "logo": "logos/Khabar_Fast.png"
   },
   {
     "name": "TV_100_MOB",
     "url": "https://jiotvmblive.cdn.jio.com/bpk-tv/TV_100_MOB/WDVLive/index.mpd",
-    "keyId": "",
-    "key": "",
-    "licenseUrl": "https://temp.webplay.fun/jtv/key.php?id=916",
+    "keyId": "0db070f043d7529aae9fb73bf3db83cc",
+    "key": "f75caa55eadabc2c5aabd04c655c0e42",
+    "licenseUrl": "",
     "cookie": "__hdnea__=st=1777696212~exp=1777717812~acl=/*~hmac=e4f85fa24427410c046b685c92538d0378bac3bb265c47ab5d91f20535df71cb",
     "logo": "logos/TV_100.png"
   },
