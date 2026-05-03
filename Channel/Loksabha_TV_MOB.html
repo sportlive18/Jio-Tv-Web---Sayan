@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Loksabha TV MOB</title>
+<meta name="referrer" content="no-referrer">
+<script src="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/shaka-player.ui.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/shaka-player@4.16.2/dist/controls.css"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.shaka-video-container{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;}
+video{width:100%;height:100%;object-fit:contain;background:#000;}
+</style>
+</head>
+<body>
+<div class="shaka-video-container" id="player-container">
+<video id="video" autoplay muted playsinline preload="metadata"></video>
+</div>
+<script>
+(async function(){
+  shaka.polyfill.installAll();
+  if(!shaka.Player.isBrowserSupported()) return;
+
+  const CONFIG={
+    streamUrl:"https://jiotvmblive.cdn.jio.com/bpk-tv/Loksabha_TV_MOB/WDVLive/index.mpd",
+    keyId:"",
+    key:"",
+    licenseUrl:"",
+    cookie:"__hdnea__=st=1777782613~exp=1777804213~acl=/*~hmac=cac8ac3e2dad08eff2219d2794f9030186ac8c1d811d38afb12c66c0b8a95ac1",
+    cookieUrl:"https://sayan10-sportlink-cookies.pages.dev/api/cookie.json"
+  };
+
+  const video=document.getElementById("video");
+  const container=document.getElementById("player-container");
+  const player=new shaka.Player();
+  await player.attach(video);
+  const ui=new shaka.ui.Overlay(player,container,video);
+
+  ui.configure({
+    addBigPlayButton: true,
+    controlPanelElements: [
+      "mute", "play_pause", "time_and_duration", "spacer", "quality", "picture_in_picture", "fullscreen"
+    ],
+    seekBarColors: {
+      base: "rgba(255, 255, 255, 0.3)",
+      buffered: "rgba(255, 255, 255, 0.5)",
+      played: "rgb(0, 150, 255)"
+    }
+  });
+
+  const drmConfig = {};
+  if (CONFIG.keyId && CONFIG.key) {
+    // Shaka expects hex for clearKeys
+    drmConfig.clearKeys = {[CONFIG.keyId]: CONFIG.key};
+  } else if (CONFIG.licenseUrl) {
+    drmConfig.servers = {'com.widevine.alpha': CONFIG.licenseUrl};
+  }
+
+  player.configure({
+    drm: drmConfig,
+    manifest:{defaultPresentationDelay:5},
+    streaming:{lowLatencyMode:true,bufferingGoal:10,rebufferingGoal:2,safeSeekOffset:5}
+  });
+
+  let cookieValue=CONFIG.cookie || "";
+  if(!cookieValue){
+      try{
+        const response=await fetch(CONFIG.cookieUrl,{cache:"no-store"});
+        const data=await response.json();
+        cookieValue=data.cookie||"";
+      }catch(e){}
+  }
+
+  if(cookieValue){
+    player.getNetworkingEngine().registerRequestFilter((type,request)=>{
+      request.headers["Referer"]="https://www.jiotv.com/";
+      request.headers["User-Agent"]="plaYtv/7.1.5 (Linux;Android 13) ExoPlayerLib/2.11.6";
+      request.headers["Cookie"]=cookieValue;
+      let urlCookie=cookieValue.startsWith("__hdnea__=")?cookieValue.substring(10):cookieValue;
+      if((type===shaka.net.NetworkingEngine.RequestType.MANIFEST||type===shaka.net.NetworkingEngine.RequestType.SEGMENT)&&!request.uris[0].includes("__hdnea__")){
+        const sep=request.uris[0].includes("?")?"&":"?";
+        request.uris[0]+=sep+"__hdnea__="+urlCookie;
+      }
+    });
+  }
+
+  try{
+    await player.load(CONFIG.streamUrl);
+    video.play().catch(()=>{});
+  }catch(e){}
+  video.addEventListener("play",()=>{video.muted=false;});
+})();
+</script>
+</body>
+</html>
