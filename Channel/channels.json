@@ -2,9 +2,9 @@
   {
     "name": "CNBCTV18Prime_MOB",
     "url": "https://jiotvmblive.cdn.jio.com/bpk-tv/CNBCTV18Prime_MOB/WDVLive/index.mpd",
-    "keyId": "eb19113c11ce5cfb80c89696765a0187",
-    "key": "b2797ce5e403ee22d8e36c6d5f2b6630",
-    "licenseUrl": "",
+    "keyId": "",
+    "key": "",
+    "licenseUrl": "https://temp.webplay.fun/jtv/key.php?id=143",
     "cookie": "__hdnea__=st=1777887013~exp=1777908613~acl=/*~hmac=6aa17a52b79d2e0b630ef2dadfef3eb5e81ff16ba651e20e2fb86c6d64369f47",
     "logo": "logos/CNBCTV18Prime.png"
   },
@@ -29,18 +29,18 @@
   {
     "name": "moviesnow_wv_drm",
     "url": "https://times-ott-live.akamaized.net/moviesnow_wv_drm/index.mpd",
-    "keyId": "40f019b86241d23ef075633fd7f1e927",
-    "key": "058dec845bd340178a388edd104a015e",
-    "licenseUrl": "",
+    "keyId": "",
+    "key": "",
+    "licenseUrl": "https://temp.webplay.fun/jtv/key.php?id=151",
     "cookie": "__hdnea__=st=1777887013~exp=1777908613~acl=/*~hmac=6aa17a52b79d2e0b630ef2dadfef3eb5e81ff16ba651e20e2fb86c6d64369f47",
     "logo": ""
   },
   {
     "name": "ZeeTalkies_MOB",
     "url": "https://jiotvmblive.cdn.jio.com/bpk-tv/ZeeTalkies_MOB/WDVLive/index.mpd",
-    "keyId": "",
-    "key": "",
-    "licenseUrl": "https://temp.webplay.fun/jtv/key.php?id=153",
+    "keyId": "2f20fb86cf6857b4b9048772dc9edc10",
+    "key": "5bc8fcee5dd070516dbdc665d3df989d",
+    "licenseUrl": "",
     "cookie": "__hdnea__=st=1777887013~exp=1777908613~acl=/*~hmac=6aa17a52b79d2e0b630ef2dadfef3eb5e81ff16ba651e20e2fb86c6d64369f47",
     "logo": "logos/ZeeTalkies.png"
   },
@@ -56,9 +56,9 @@
   {
     "name": "Travel_XP_HD_MOB",
     "url": "https://jiotvmblive.cdn.jio.com/bpk-tv/Travel_XP_HD_MOB/WDVLive/index.mpd",
-    "keyId": "157cd1bd71a256fe8ab763ba280320e5",
-    "key": "6befde8b90b6926423cc83775b8dcb59",
-    "licenseUrl": "",
+    "keyId": "",
+    "key": "",
+    "licenseUrl": "https://temp.webplay.fun/jtv/key.php?id=164",
     "cookie": "__hdnea__=st=1777887013~exp=1777908613~acl=/*~hmac=6aa17a52b79d2e0b630ef2dadfef3eb5e81ff16ba651e20e2fb86c6d64369f47",
     "logo": "logos/Travel_XP_HD.png"
   },
